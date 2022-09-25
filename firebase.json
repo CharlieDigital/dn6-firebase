@@ -1,0 +1,14 @@
+{
+  "emulators": {
+    "auth": {
+      "port": 10099
+    },
+    "firestore": {
+      "port": 8181
+    },
+    "ui": {
+      "enabled": true,
+      "port": 9898
+    }
+  }
+}

@@ -1,0 +1,15 @@
+﻿{
+  "profiles": {
+    "api": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "applicationUrl": "https://localhost:20443;http://localhost:20080",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "FIRESTORE_EMULATOR_HOST": "localhost:8181"
+      }
+    }
+  }
+}
