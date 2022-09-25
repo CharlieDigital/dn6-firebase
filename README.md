@@ -308,9 +308,11 @@ app.MapGet("/city/add/{state}/{name}",
   .WithName("AddCity");
 ```
 
-Now our API call will fail.
+Now our API call will fail since we haven't set up the token validation.
 
-We need to add in JWT token validation.  Start by adding the JWT package from Microsort.
+We need to add in JWT token validation code now.
+
+Start by adding the JWT package from Microsort.
 
 ```bash
 cd api
@@ -357,8 +359,6 @@ builder.Services.AddAuthorization();
 app.UseAuthentication();
 app.UseAuthorization();
 ```
-
-![Noice](assets/noice.gif)
 
 ## Realtime Subscriptions
 
@@ -428,6 +428,8 @@ Boom:
 Notice that as soon as the subscription starts, we'll get our existing cities listed.
 
 As items are added/deleted, they are reflected in the front-end without hitting our backend.
+
+![Noice](assets/noice.gif)
 
 ----
 
