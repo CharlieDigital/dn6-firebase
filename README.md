@@ -139,13 +139,14 @@ app.MapGet("/city/add/{state}/{name}",
     .WithName("AddCity");
 ```
 
-From the command line"
+From the command line:
 
 ```bash
 # If not already in the API directory
 cd api
 
-# Start the app.
+# Start the app.  Note the environment variable!  On Windows, you'll
+# need to set this or use one of the laucn profiles.
 FIRESTORE_EMULATOR_HOST="localhost:8181" dotnet run
 ```
 
@@ -425,3 +426,19 @@ And update our template:
 Boom:
 
 ![End to End](assets/end-to-end.gif)
+
+----
+
+## In GCP...
+
+When running in GCP, you'll need to download the actual key assocaited to the sevice account.
+
+You'll find this in the Firebase console:
+
+- https://console.firebase.google.com/
+- Select your project
+- Click **Project settings**
+- Click **Service accounts**
+- Click **Generate new private key**
+
+You can also create new service accounts as needed.
