@@ -1,5 +1,7 @@
 # dotnet6 + Google Firebase
 
+Read more here: https://chrlschn.medium.com/google-firebase-with-dotnet-6-f8a4a62db0b1
+
 This repo provides a quickstart for working with:
 
 - dotnet6 (C#)
@@ -37,7 +39,7 @@ On macOS:
 # From the root.
 curl -sL https://firebase.tools | bash
 firebase --version                    # Verify installation
-firebsae login
+firebase login
 firebase init                         # Start the firebase initialization for the workspace.
 ```
 
@@ -125,7 +127,7 @@ var projectId = "dn6-firebase-demo";
 
 // Our one and only route.
 app.MapGet("/city/add/{state}/{name}",
-  [Authorize] async (string state, string name) => {
+  async (string state, string name) => {
     var firestore = new FirestoreDbBuilder {
       ProjectId = projectId,
       EmulatorDetection = Google.Api.Gax.EmulatorDetection.EmulatorOrProduction
@@ -222,7 +224,7 @@ Just name it `web-app` for now and click **Register app** which will generate a 
 
 ```js
 // Your web app's Firebase configuration.
-// T his is not secret as it compiles into the UI package
+// This is not secret as it compiles into the UI package
 const firebaseConfig = {
   apiKey: "AIzaSyBa_VDckwNQ2OaooVRoSJY",
   authDomain: "dn6-firebase-demo.firebaseapp.com",
