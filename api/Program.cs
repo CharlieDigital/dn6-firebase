@@ -14,10 +14,10 @@ builder.Services
     var isProduction = builder.Environment.IsProduction();
     var issuer = $"https://securetoken.google.com/{projectId}";
     options.Authority = issuer;
-    options.TokenValidationParameters.ValidateIssuer = isProduction;
-    options.TokenValidationParameters.ValidIssuer = issuer;
-    options.TokenValidationParameters.ValidateAudience = isProduction;
     options.TokenValidationParameters.ValidAudience = projectId;
+    options.TokenValidationParameters.ValidIssuer = issuer;
+    options.TokenValidationParameters.ValidateIssuer = isProduction;
+    options.TokenValidationParameters.ValidateAudience = isProduction;
     options.TokenValidationParameters.ValidateLifetime = isProduction;
     options.TokenValidationParameters.RequireSignedTokens = isProduction;
 
@@ -65,12 +65,13 @@ app.UseAuthorization();
 // Our one and only route.
 app.MapGet("/city/add/{state}/{name}",
   [Authorize] async (string state, string name) => {
-    FirestoreDb db = new FirestoreDbBuilder {
+    var firestore = new FirestoreDbBuilder {
       ProjectId = projectId,
       EmulatorDetection = Google.Api.Gax.EmulatorDetection.EmulatorOrProduction
-    }.Build();
+    }
+    .Build();
 
-    var collection = db.Collection("cities");
+    var collection = firestore.Collection("cities");
     await collection.Document(Guid.NewGuid().ToString("N")).SetAsync(
         new City(name, state)
     );

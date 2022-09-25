@@ -124,16 +124,18 @@ var projectId = "dn6-firebase-demo";
 // Our one and only route.
 app.MapGet("/city/add/{state}/{name}",
   [Authorize] async (string state, string name) => {
-    FirestoreDb db = new FirestoreDbBuilder {
+    var firestore = new FirestoreDbBuilder {
       ProjectId = projectId,
       EmulatorDetection = Google.Api.Gax.EmulatorDetection.EmulatorOrProduction
-    }.Build();
+    }
+    .Build();
 
-    var collection = db.Collection("cities");
+    var collection = firestore.Collection("cities");
     await collection.Document(Guid.NewGuid().ToString("N")).SetAsync(
         new City(name, state)
     );
-  }).WithName("AddCity");
+  })
+  .WithName("AddCity");
 ```
 
 From the command line:
@@ -195,16 +197,18 @@ We'll replace our `web-vue/src/App.vue` file with a simple input:
 
 ![Testing UI](assets/first-ui.gif)
 
-## Adding login
+## Adding Login
 
-Let's add authentication to the front-end.
+Let's add authentication to the front-end.  For this app, we'll see how to set it up to connect to our emulator.
+
+Start by adding `firebase` to our front-end project:
 
 ```bash
 cd web-vue
 yarn add firebase
 ```
 
-At this point, we have to initialize the app with the upstream (read cloud hosted runtime).  If we don't initialize the app, we get an error:
+At this point, we have to initialize the app with the upstream (read cloud hosted runtime).  If we don't initialize the app, we will get an error:
 
 ```
 No Firebase App '[DEFAULT]' has been created - call Firebase App.initializeApp() (app/no-app).
@@ -271,7 +275,7 @@ Checkout the sweet authentication emulation:
 
 ![Auth Emulation](assets/first-login.gif)
 
-We need to update our API call to send the header:
+We need to update our API call to send the header on our API calls:
 
 ```js
 const createCity = async () => {
@@ -322,10 +326,10 @@ builder.Services
     var isProduction = builder.Environment.IsProduction();
     var issuer = $"https://securetoken.google.com/{projectId}";
     options.Authority = issuer;
-    options.TokenValidationParameters.ValidateIssuer = isProduction;
-    options.TokenValidationParameters.ValidIssuer = issuer;
-    options.TokenValidationParameters.ValidateAudience = isProduction;
     options.TokenValidationParameters.ValidAudience = projectId;
+    options.TokenValidationParameters.ValidIssuer = issuer;
+    options.TokenValidationParameters.ValidateIssuer = isProduction;
+    options.TokenValidationParameters.ValidateAudience = isProduction;
     options.TokenValidationParameters.ValidateLifetime = isProduction;
     options.TokenValidationParameters.RequireSignedTokens = isProduction;
 
