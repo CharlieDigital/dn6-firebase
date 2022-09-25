@@ -54,9 +54,9 @@ Create a new project
 dn6-firebase-demo
 ```
 
-You have to create a project; the app initialization will fail if you don't.
+You ***must*** create a project; the app initialization will fail later on if you don't.  Don't worry, you don't have to provision any services ***in*** Google Cloud; you just need to have the project.
 
-If you already have a project, then you can also select it instead.
+> 💡 If you already have a project, then you can also select it instead.
 
 ```bash
 # ? Which Firebase emulators do you want to set up?
@@ -75,7 +75,7 @@ At this point, you should see the following files added to your repo:
 firebase.json
 ```
 
-You can start the emulator using the following command:
+Now start the emulator using the following command:
 
 ```bash
 firbase emulators:start
@@ -109,10 +109,10 @@ public record City(
     [property: FirestoreProperty] string Name,
     [property: FirestoreProperty] string State
 ) {
-    /// <summary>
-    /// The Google APIs require a default, parameterless constructor to work.
-    /// </summary>
-    public City() : this("", "") { }
+  /// <summary>
+  /// The Google APIs require a default, parameterless constructor to work.
+  /// </summary>
+  public City() : this("", "") { }
 }
 ```
 
@@ -121,22 +121,19 @@ Then add our endpoint:
 ```csharp
 var projectId = "dn6-firebase-demo";
 
+// Our one and only route.
 app.MapGet("/city/add/{state}/{name}",
-    async (string state, string name) =>
-    {
-        FirestoreDb db = new FirestoreDbBuilder
-        {
-            ProjectId = projectId,
-            EmulatorDetection = Google.Api.Gax.EmulatorDetection.EmulatorOrProduction
+  [Authorize] async (string state, string name) => {
+    FirestoreDb db = new FirestoreDbBuilder {
+      ProjectId = projectId,
+      EmulatorDetection = Google.Api.Gax.EmulatorDetection.EmulatorOrProduction
+    }.Build();
 
-        }.Build();
-
-        var collection = db.Collection("cities");
-        await collection.Document(Guid.NewGuid().ToString("N")).SetAsync(
-            new City (name, state)
-        );
-    })
-    .WithName("AddCity");
+    var collection = db.Collection("cities");
+    await collection.Document(Guid.NewGuid().ToString("N")).SetAsync(
+        new City(name, state)
+    );
+  }).WithName("AddCity");
 ```
 
 From the command line:
@@ -146,7 +143,7 @@ From the command line:
 cd api
 
 # Start the app.  Note the environment variable!  On Windows, you'll
-# need to set this or use one of the laucn profiles.
+# need to set this or use one of the launch profiles.
 FIRESTORE_EMULATOR_HOST="localhost:8181" dotnet run
 ```
 
@@ -185,15 +182,15 @@ We'll replace our `web-vue/src/App.vue` file with a simple input:
 
     console.log(response);
   }
-  </script>
+</script>
 
-  <template>
-    <div>
-      <input type="text" v-model="cityName" />
-      <input type="text" v-model="stateName" />
-      <button @click="createCity">Add</button>
-    </div>
-  </template>
+<template>
+  <div>
+    <input type="text" v-model="cityName" />
+    <input type="text" v-model="stateName" />
+    <button @click="createCity">Add</button>
+  </div>
+</template>
 ```
 
 ![Testing UI](assets/first-ui.gif)
@@ -218,7 +215,8 @@ Locate your project in [the Firebase console](https://console.firebase.google.co
 Just name it `web-app` for now and click **Register app** which will generate a config:
 
 ```js
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration.
+// T his is not secret as it compiles into the UI package
 const firebaseConfig = {
   apiKey: "AIzaSyBa_VDckwNQ2OaooVRoSJY",
   authDomain: "dn6-firebase-demo.firebaseapp.com",
@@ -284,7 +282,7 @@ const createCity = async () => {
   const response = await fetch(url, {
     method: "GET",
     headers: new Headers({
-      Authorization: "bearer " + authToken,
+      Authorization: "bearer " + authToken.value,
     }),
   });
 
@@ -300,12 +298,10 @@ Let's start by adding the `[Authorize]` attribute to the route.
 
 ```csharp
 app.MapGet("/city/add/{state}/{name}",
-    [Authorize]
-    async (string state, string name) =>
-    {
-        // Omitted
-    })
-    .WithName("AddCity");
+  [Authorize] async (string state, string name) => {
+      // Omitted
+  })
+  .WithName("AddCity");
 ```
 
 Now our API call will fail.
@@ -320,37 +316,35 @@ dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
 And update our app:
 
 ```csharp
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        var isProduction = builder.Environment.IsProduction();
-        var issuer = $"https://securetoken.google.com/{projectId}";
-        options.Authority = issuer;
-        options.TokenValidationParameters.ValidateIssuer = isProduction;
-        options.TokenValidationParameters.ValidIssuer = issuer;
-        options.TokenValidationParameters.ValidateAudience = isProduction;
-        options.TokenValidationParameters.ValidAudience = projectId;
-        options.TokenValidationParameters.ValidateLifetime = isProduction;
-        options.TokenValidationParameters.RequireSignedTokens = isProduction;
+builder.Services
+  .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+  .AddJwtBearer(options => {
+    var isProduction = builder.Environment.IsProduction();
+    var issuer = $"https://securetoken.google.com/{projectId}";
+    options.Authority = issuer;
+    options.TokenValidationParameters.ValidateIssuer = isProduction;
+    options.TokenValidationParameters.ValidIssuer = issuer;
+    options.TokenValidationParameters.ValidateAudience = isProduction;
+    options.TokenValidationParameters.ValidAudience = projectId;
+    options.TokenValidationParameters.ValidateLifetime = isProduction;
+    options.TokenValidationParameters.RequireSignedTokens = isProduction;
 
-        if (isProduction)
-        {
-            var jwtKeySetUrl = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
-            options.TokenValidationParameters.IssuerSigningKeyResolver = (s, securityToken, identifier, parameters) =>
-            {
-                // get JsonWebKeySet from AWS
-                var keyset = new HttpClient()
-                    .GetFromJsonAsync<Dictionary<string, string>>(jwtKeySetUrl).Result;
+    if (isProduction) {
+      var jwtKeySetUrl = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
+      options.TokenValidationParameters.IssuerSigningKeyResolver = (s, securityToken, identifier, parameters) => {
+        // get JsonWebKeySet from AWS
+        var keyset = new HttpClient()
+            .GetFromJsonAsync<Dictionary<string, string>>(jwtKeySetUrl).Result;
 
-                // serialize the result
-                var keys = keyset!.Values.Select(
-                    d => new X509SecurityKey(new X509Certificate2(Encoding.UTF8.GetBytes(d))));
+        // serialize the result
+        var keys = keyset!.Values.Select(
+            d => new X509SecurityKey(new X509Certificate2(Encoding.UTF8.GetBytes(d))));
 
-                // cast the result to be the type expected by IssuerSigningKeyResolver
-                return keys;
-            };
-        }
-    });
+        // cast the result to be the type expected by IssuerSigningKeyResolver
+        return keys;
+      };
+    }
+  });
 
 builder.Services.AddAuthorization();
 
@@ -368,7 +362,7 @@ app.UseAuthorization();
 
 Let's add a realtime subscription on our frontend so that we get an update on every city added.
 
-We'll add a ref for cities:
+We'll add an interface and `ref` for the cities:
 
 ```js
 interface City {
@@ -379,14 +373,14 @@ interface City {
 const cities = ref<City[]>([])
 ```
 
-And add the database:
+And add the database handle:
 
 ```js
 const db = getFirestore(app);
 connectFirestoreEmulator(db, "localhost", 8080);
 ```
 
-Now let's add our handlers:
+Now let's add our subscription handlers:
 
 ```js
 const startSubscription = () => {
@@ -414,18 +408,22 @@ const startSubscription = () => {
 And update our template:
 
 ```vue
-  <div>
-      <p
-        v-for="(city, index) in cities"
-        :key="index">
-        {{ city.Name + ', ' + city.State }}
-      </p>
-  </div>
+<div>
+    <p
+      v-for="(city, index) in cities"
+      :key="index">
+      {{ city.Name + ', ' + city.State }}
+    </p>
+</div>
 ```
 
 Boom:
 
 ![End to End](assets/end-to-end.gif)
+
+Notice that as soon as the subscription starts, we'll get our existing cities listed.
+
+As items are added/deleted, they are reflected in the front-end without hitting our backend.
 
 ----
 
@@ -442,3 +440,5 @@ You'll find this in the Firebase console:
 - Click **Generate new private key**
 
 You can also create new service accounts as needed.
+
+You'll also want to set up authorization policies on the paths in Firestore to ensure users can only subscribe to their documents.

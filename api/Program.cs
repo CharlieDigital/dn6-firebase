@@ -74,7 +74,8 @@ app.MapGet("/city/add/{state}/{name}",
     await collection.Document(Guid.NewGuid().ToString("N")).SetAsync(
         new City(name, state)
     );
-  }).WithName("AddCity");
+  })
+  .WithName("AddCity");
 
 // Start our app here.
 app.Run();
