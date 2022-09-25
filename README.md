@@ -359,6 +359,69 @@ app.UseAuthentication();
 app.UseAuthorization();
 ```
 
-<p align="center">
 ![Noice](assets/noice.gif)
-</p>
+
+## Realtime Subscriptions
+
+> 💡 Not best practices here; you want to create policies to ensure only authorized readers can subscribe.
+
+Let's add a realtime subscription on our frontend so that we get an update on every city added.
+
+We'll add a ref for cities:
+
+```js
+interface City {
+  State: string
+  Name: string
+}
+
+const cities = ref<City[]>([])
+```
+
+And add the database:
+
+```js
+const db = getFirestore(app);
+connectFirestoreEmulator(db, "localhost", 8080);
+```
+
+Now let's add our handlers:
+
+```js
+const startSubscription = () => {
+  unsubscribe = onSnapshot(collection(db, "cities"), (snapshot) => {
+    for (const docChange of snapshot.docChanges()) {
+      const city: City = docChange.doc.data() as City
+
+      if (docChange.type === "added") {
+        cities.value.push(city)
+      }
+
+      if (docChange.type === "modified") {
+        console.log("Modified: ", docChange.doc.data());
+      }
+
+      if (docChange.type === "removed") {
+        var index = cities.value.findIndex(c => c.Name === city.Name)
+        cities.value.splice(index, 1)
+      }
+    }
+  });
+}
+```
+
+And update our template:
+
+```vue
+  <div>
+      <p
+        v-for="(city, index) in cities"
+        :key="index">
+        {{ city.Name + ', ' + city.State }}
+      </p>
+  </div>
+```
+
+Boom:
+
+![End to End](assets/end-to-end.gif)
