@@ -359,4 +359,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 ```
 
+<p align="center">
 ![Noice](assets/noice.gif)
+</p>
