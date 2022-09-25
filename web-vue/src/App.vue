@@ -92,23 +92,25 @@ const firebaseLogin = () => {
  * Start the subscription after login.
  */
 const startSubscription = () => {
-  unsubscribe = onSnapshot(collection(db, "cities"), (snapshot) => {
-    for (const docChange of snapshot.docChanges()) {
-      const city: City = docChange.doc.data() as City
+  unsubscribe = onSnapshot(
+    collection(db, "cities"),
+    (snapshot) => {
+      for (const docChange of snapshot.docChanges()) {
+        const city: City = docChange.doc.data() as City
 
-      if (docChange.type === "added") {
-        cities.value.push(city)
-      }
+        if (docChange.type === "added") {
+          cities.value.push(city)
+        }
 
-      if (docChange.type === "modified") {
-        console.log("Modified: ", docChange.doc.data());
-      }
+        if (docChange.type === "modified") {
+          console.log("Modified: ", docChange.doc.data());
+        }
 
-      if (docChange.type === "removed") {
-        var index = cities.value.findIndex(c => c.Name === city.Name)
-        cities.value.splice(index, 1)
+        if (docChange.type === "removed") {
+          var index = cities.value.findIndex(c => c.Name === city.Name)
+          cities.value.splice(index, 1)
+        }
       }
-    }
   });
 }
 </script>

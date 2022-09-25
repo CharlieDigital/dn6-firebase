@@ -44,8 +44,6 @@ function App() {
   const [authToken, setAuthToken] = useState('')
   const [cities, setCities] = useState<City[]>([])
   const [started, setStarted] = useState<boolean>()
-  const [, updateState] = useState();
-  const forceUpdate = useCallback(() => updateState({} as any), []);
 
   /**
    * Function to create a city
@@ -84,28 +82,28 @@ function App() {
   };
 
   const startSubscription = () => {
-    console.log("Starting subscription")
+    const unsubscribe = onSnapshot(
+      collection(db, "cities"),
+      (snapshot) => {
+        const c: City[] = [...cities]
 
-    const unsubscribe = onSnapshot(collection(db, "cities"), (snapshot) => {
-      for (const docChange of snapshot.docChanges()) {
-        const city: City = docChange.doc.data() as City
+        for (const docChange of snapshot.docChanges()) {
+          const city: City = docChange.doc.data() as City
 
-        if (docChange.type === "added") {
-          cities.push(city)
+          if (docChange.type === "added") {
+            c.push(city)
+          }
+
+          if (docChange.type === "modified") {
+            console.log("Modified: ", docChange.doc.data());
+          }
+
+          if (docChange.type === "removed") {
+            var index = cities.findIndex(c => c.Name === city.Name)
+            c.splice(index, 1)
+          }
         }
-
-        if (docChange.type === "modified") {
-          console.log("Modified: ", docChange.doc.data());
-        }
-
-        if (docChange.type === "removed") {
-          var index = cities.findIndex(c => c.Name === city.Name)
-          cities.splice(index, 1)
-        }
-      }
-
-      setCities(cities)
-      forceUpdate() // We need to force update!
+        setCities(c)
     });
 
     return unsubscribe
