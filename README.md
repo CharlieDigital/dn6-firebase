@@ -31,7 +31,7 @@ yarn create vite . --template vue-ts  # Create a new Vue application with TypeSc
 
 To install the emulator, [check the Google documentation for your system](https://firebase.google.com/docs/emulator-suite/install_and_configure).
 
-On macOs:
+On macOS:
 
 ```bash
 # From the root.
@@ -68,6 +68,8 @@ Firestore Emulator
 # When prompted, download the emulators
 ```
 
+> ℹ️ Important note: I'm using non-default ports in these examples!
+
 At this point, you should see the following files added to your repo:
 
 ```
@@ -78,7 +80,7 @@ firebase.json
 Now start the emulator using the following command:
 
 ```bash
-firbase emulators:start
+firebase emulators:start
 ```
 
 If all goes well, you can head to:
