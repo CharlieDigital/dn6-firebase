@@ -45,6 +45,9 @@ const createCity = async () => {
 
   const response = await fetch(url, {
     method: "GET",
+    headers: new Headers({
+      Authorization: "bearer " + authToken.value,
+    }),
   });
 
   console.log(response);

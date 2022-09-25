@@ -272,3 +272,91 @@ Checkout the sweet authentication emulation:
 
 ![Auth Emulation](assets/first-login.gif)
 
+We need to update our API call to send the header:
+
+```js
+const createCity = async () => {
+  const city = cityName.value;
+  const state = stateName.value;
+  const url = `http://localhost:20080/city/add/${state}/${city}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: new Headers({
+      Authorization: "bearer " + authToken,
+    }),
+  });
+
+  console.log(response);
+};
+```
+
+## Backend Validation
+
+Now we'll get a token from the frontend and we need to validate it.
+
+Let's start by adding the `[Authorize]` attribute to the route.
+
+```csharp
+app.MapGet("/city/add/{state}/{name}",
+    [Authorize]
+    async (string state, string name) =>
+    {
+        // Omitted
+    })
+    .WithName("AddCity");
+```
+
+Now our API call will fail.
+
+We need to add in JWT token validation.  Start by adding the JWT package from Microsort.
+
+```bash
+cd api
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+```
+
+And update our app:
+
+```csharp
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var isProduction = builder.Environment.IsProduction();
+        var issuer = $"https://securetoken.google.com/{projectId}";
+        options.Authority = issuer;
+        options.TokenValidationParameters.ValidateIssuer = isProduction;
+        options.TokenValidationParameters.ValidIssuer = issuer;
+        options.TokenValidationParameters.ValidateAudience = isProduction;
+        options.TokenValidationParameters.ValidAudience = projectId;
+        options.TokenValidationParameters.ValidateLifetime = isProduction;
+        options.TokenValidationParameters.RequireSignedTokens = isProduction;
+
+        if (isProduction)
+        {
+            var jwtKeySetUrl = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
+            options.TokenValidationParameters.IssuerSigningKeyResolver = (s, securityToken, identifier, parameters) =>
+            {
+                // get JsonWebKeySet from AWS
+                var keyset = new HttpClient()
+                    .GetFromJsonAsync<Dictionary<string, string>>(jwtKeySetUrl).Result;
+
+                // serialize the result
+                var keys = keyset!.Values.Select(
+                    d => new X509SecurityKey(new X509Certificate2(Encoding.UTF8.GetBytes(d))));
+
+                // cast the result to be the type expected by IssuerSigningKeyResolver
+                return keys;
+            };
+        }
+    });
+
+builder.Services.AddAuthorization();
+
+// Down below...
+
+app.UseAuthentication();
+app.UseAuthorization();
+```
+
+![Noice](assets/noice.gif)
